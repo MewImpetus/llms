@@ -12,6 +12,10 @@ failure_strategy: rollback
 load_balancing_strategy: random
 ---
 
+# Updates
+
+
+
 # Chat UI
 
 **Find the docs at [hf.co/docs/chat-ui](https://huggingface.co/docs/chat-ui/index).**

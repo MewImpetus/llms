@@ -91,7 +91,20 @@ export async function generateCsrfToken(sessionId: string, redirectUrl: string):
 }
 
 async function getOIDCClient(settings: OIDCSettings): Promise<BaseClient> {
-	const issuer = await Issuer.discover(OIDConfig.PROVIDER_URL);
+	let issuer: Issuer;
+
+	if (OIDConfig.PROVIDER_URL.includes("authing.cn")) {
+		// 如果 PROVIDER_URL 包含 authing.cn，则手动创建 OIDC 客户端
+		issuer = new Issuer({
+			issuer: `${OIDConfig.PROVIDER_URL}/oidc`,
+			authorization_endpoint: `${OIDConfig.PROVIDER_URL}/oidc/auth`,
+			token_endpoint: `${OIDConfig.PROVIDER_URL}/oidc/token`,
+			userinfo_endpoint: `${OIDConfig.PROVIDER_URL}/oidc/me`,
+			jwks_uri: `${OIDConfig.PROVIDER_URL}/oidc/.well-known/jwks.json`,
+		});
+	} else {
+		issuer = await Issuer.discover(OIDConfig.PROVIDER_URL);
+	}
 
 	return new issuer.Client({
 		client_id: OIDConfig.CLIENT_ID,
@@ -116,6 +129,28 @@ export async function getOIDCAuthorizationUrl(
 	});
 }
 
+// 对电话号码进行脱敏
+function maskPhone(phone) {
+	if (phone && phone.length > 7) {
+		// 仅保留前3位和后4位，中间用 '*' 代替
+		return phone.substring(0, 3) + "****" + phone.substring(phone.length - 4);
+	}
+	return phone;
+}
+
+// 对邮箱进行脱敏
+function maskEmail(email) {
+	if (email) {
+		const emailParts = email.split("@");
+		if (emailParts[0].length > 2) {
+			// 仅保留邮箱名的前两位和 '@' 后的域名部分
+			return emailParts[0].substring(0, 2) + "****" + "@" + emailParts[1];
+		}
+		return email; // 如果邮箱名太短，不做脱敏处理
+	}
+	return email;
+}
+
 export async function getOIDCUserData(
 	settings: OIDCSettings,
 	code: string,
@@ -123,8 +158,16 @@ export async function getOIDCUserData(
 ): Promise<OIDCUserInfo> {
 	const client = await getOIDCClient(settings);
 	const token = await client.callback(settings.redirectURI, { code, iss });
-	const userData = await client.userinfo(token);
-
+	let userData = await client.userinfo(token);
+	userData = {
+		sub: userData.sub,
+		name: userData.phone_number || userData.email,
+		preferred_username: maskPhone(userData.phone_number) || maskEmail(userData.email),
+		profile: "",
+		picture: userData.picture,
+		isPro: userData.isPro || "",
+		orgs: [],
+	};
 	return { token, userData };
 }
 

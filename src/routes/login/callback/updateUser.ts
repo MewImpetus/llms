@@ -11,6 +11,15 @@ import { addWeeks } from "date-fns";
 import { OIDConfig } from "$lib/server/auth";
 import { env } from "$env/dynamic/private";
 import { logger } from "$lib/server/logger";
+import { randomBytes } from "crypto";
+
+function generateApiKey() {
+	const apiKeyPrefix = "lc-";
+	const apiKeyLength = 32;
+	const randomString = randomBytes(apiKeyLength / 2).toString("hex");
+
+	return apiKeyPrefix + randomString;
+}
 
 export async function updateUser(params: {
 	userData: UserinfoResponse;
@@ -34,6 +43,10 @@ export async function updateUser(params: {
 		picture: avatarUrl,
 		sub: hfUserId,
 		orgs,
+		proExpiration,
+		tokenBalance,
+		totalRechargeAmount,
+		apiKey,
 	} = z
 		.object({
 			preferred_username: z.string().optional(),
@@ -52,6 +65,10 @@ export async function updateUser(params: {
 					})
 				)
 				.optional(),
+			proExpiration: z.date().optional(), // 新增字段
+			tokenBalance: z.number().optional(), // 新增字段
+			totalRechargeAmount: z.number().optional(), // 新增字段
+			apiKey: z.string().optional(), // 新增字段
 		})
 		.setKey(OIDConfig.NAME_CLAIM, z.string())
 		.refine((data) => data.preferred_username || data.email, {
@@ -74,6 +91,10 @@ export async function updateUser(params: {
 			preferred_username: string;
 			isEnterprise: boolean;
 		}>;
+		proExpiration?: Date; // 新增字段
+		tokenBalance?: number; // 新增字段
+		totalRechargeAmount?: number; // 新增字段
+		apiKey?: string; // 新增字段
 	} & Record<string, string>;
 
 	// Dynamically access user data based on NAME_CLAIM from environment
@@ -85,6 +106,10 @@ export async function updateUser(params: {
 			login_name: name,
 			login_email: email,
 			login_orgs: orgs?.map((el) => el.sub),
+			login_pro: proExpiration,
+			login_balance: tokenBalance,
+			login_total_pay: totalRechargeAmount,
+			login_apikey: apiKey,
 		},
 		"user login"
 	);
@@ -149,6 +174,10 @@ export async function updateUser(params: {
 			hfUserId,
 			isAdmin,
 			isEarlyAccess,
+			proExpiration: new Date(),
+			tokenBalance: 0,
+			totalRechargeAmount: 0,
+			apiKey: generateApiKey(),
 		});
 
 		userId = insertedId;

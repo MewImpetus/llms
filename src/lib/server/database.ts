@@ -195,6 +195,9 @@ export class Database {
 			.catch((e) => logger.error(e));
 		// No unicity because due to renames & outdated info from oauth provider, there may be the same username on different users
 		users.createIndex({ username: 1 }).catch((e) => logger.error(e));
+		// add api key index
+		users.createIndex({ apiKey: 1 }, { unique: true, sparse: true }).catch((e) => logger.error(e));
+
 		messageEvents
 			.createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 })
 			.catch((e) => logger.error(e));

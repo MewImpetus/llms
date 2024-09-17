@@ -236,6 +236,10 @@ export const load: LayoutServerLoad = async ({ locals, depends, request }) => {
 			logoutDisabled: locals.user.logoutDisabled,
 			isAdmin: locals.user.isAdmin ?? false,
 			isEarlyAccess: locals.user.isEarlyAccess ?? false,
+			proExpiration: locals.user.proExpiration, // 新增字段
+			tokenBalance: locals.user.tokenBalance, // 新增字段
+			totalRechargeAmount: locals.user.totalRechargeAmount, // 新增字段
+			apiKey: locals.user.apiKey, // 新增字段
 		},
 		assistant,
 		enableAssistants,

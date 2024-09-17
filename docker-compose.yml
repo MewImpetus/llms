@@ -12,7 +12,6 @@ services:
     env_file:
       - .env.private
     environment:
-      HUPI_CALLBACK_DOMAIN: 'llms.chat'
       MODELS: >
         [
           { 
@@ -223,6 +222,18 @@ services:
             "icon": "camera",
             "description": "This tool lets you edit images",
             "outputComponentIdx": 0
+          }
+        ]
+      TEXT_EMBEDDING_MODELS: |
+        [
+          {
+            "name": "Xenova/gte-small",
+            "displayName": "Xenova/gte-small",
+            "description": "Local embedding model running on the server.",
+            "chunkCharLength": 512,
+            "endpoints": [
+              { "type": "transformersjs" }
+            ]
           }
         ]
   mongo:

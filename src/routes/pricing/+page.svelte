@@ -32,17 +32,17 @@
 			link: "/pay/pro360"
 		},
 		{
-			title: "AIGC算力",
+			title: "AI Generation Token",
 			description: "用于支付需要更高算力的模型服务",
 			features: [
 				"可以用于支付付费模型的费用",
 				"可以用于支付付费助手的费用",
 				"可以用于支付订阅Telegram bot的费用",
-				"未用完的部分后期可转为AIGC币提取到区块链"
+				"未用完的部分后期可转为AIGT币提取到区块链钱包"
 			],
-			price: "100 美元",
-			type: "起价",
-			link: "/pay/aigc100"
+			price: "150 美元",
+			type: "获得1000万个AIGT",
+			link: "/pay/aigt100"
 		},
 		{
 			title: "定制大模型服务",

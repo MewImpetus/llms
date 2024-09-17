@@ -16,6 +16,7 @@
 	});
 
 	const settings = useSettingsStore();
+
 </script>
 
 <div

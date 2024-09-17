@@ -89,12 +89,13 @@
 				class="flex h-9 flex-none shrink items-center gap-1.5 truncate pr-2 text-gray-500 dark:text-gray-400"
 				>{user?.username || user?.email}</span
 			>
+
 			{#if !user.logoutDisabled}
 				<button
 					type="submit"
 					class="ml-auto h-6 flex-none items-center gap-1.5 rounded-md border bg-white px-2 text-gray-700 shadow-sm group-hover:flex hover:shadow-none dark:border-gray-600 dark:bg-gray-600 dark:text-gray-400 dark:hover:text-gray-300 md:hidden"
 				>
-					Sign Out
+					Sign out
 				</button>
 			{/if}
 		</form>
@@ -154,6 +155,12 @@
 		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 	>
 		Settings
+	</a>
+	<a
+		href="{base}/pricing"
+		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+	>
+		Pricing
 	</a>
 	{#if envPublic.PUBLIC_APP_NAME === "LLMsChat"}
 		<a

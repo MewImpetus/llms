@@ -16,8 +16,15 @@
 
 目前我们已经上线了直逼GPT4的[Llama3](https://llms.chat/models/meta-llama/Meta-Llama-3.1-72B-Instruct)和[Command R Plus](https://llms.chat/models/CohereForAI/c4ai-command-r-plus)模型。 
 
+
+
 并且我们会在社区提供大量高效可用的Assistant，普通用户也可创建及分享自己的Assistant。
 
-## 交流群
+
+## API 文档
 
 
+## 交流反馈
+
+
+[🚀 Telegram 官群](https://t.me/+DpUFxHcNz902YTJl)

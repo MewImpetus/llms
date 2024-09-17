@@ -198,7 +198,7 @@
 			id="System Instructions"
 			class="overlow-y-auto mt-2 box-border h-fit max-h-[240px] w-full overflow-y-auto whitespace-pre-line rounded-lg border-2 border-gray-200 bg-gray-100 p-2 disabled:cursor-not-allowed 2xl:max-h-[310px]"
 		>
-			{#if assistant?.dynamicPrompt}
+			<!-- {#if assistant?.dynamicPrompt}
 				{#each prepromptTags as tag}
 					{#if tag.startsWith("{{") && tag.endsWith("}}") && tag.includes("url=")}
 						{@const url = tag.split("url=")[1].split("}}")[0]}
@@ -215,7 +215,8 @@
 				{/each}
 			{:else}
 				{assistant?.preprompt}
-			{/if}
+			{/if} -->
+			******
 		</div>
 
 		{#if assistant?.tools?.length}

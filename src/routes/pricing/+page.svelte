@@ -38,7 +38,7 @@
 			],
 			price: "150 美元",
 			type: "获得1000万个AIGT",
-			link: "/pay/aigt100"
+			link: "/pay/aigt150"
 		},
 		{
 			title: "定制大模型服务",

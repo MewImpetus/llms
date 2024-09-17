@@ -12,6 +12,7 @@ services:
     env_file:
       - .env.private
     environment:
+      HUPI_CALLBACK_DOMAIN: 'llms.chat'
       MODELS: >
         [
           { 

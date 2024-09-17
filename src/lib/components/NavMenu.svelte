@@ -149,19 +149,20 @@
 			>
 		</a>
 	{/if}
-
-	<a
-		href="{base}/settings"
-		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-	>
-		Settings
-	</a>
-	<a
-		href="{base}/pricing"
-		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-	>
-		Pricing
-	</a>
+	{#if user?.username || user?.email}
+		<a
+			href="{base}/settings"
+			class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+		>
+			Settings
+		</a>
+		<a
+			href="{base}/pricing"
+			class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+		>
+			Pricing
+		</a>
+	{/if}
 	{#if envPublic.PUBLIC_APP_NAME === "LLMsChat"}
 		<a
 			href="{base}/privacy"

@@ -93,11 +93,7 @@
 		color: #2779bd;
 	}
 
-	.icon {
-		width: 1rem;
-		height: 1rem;
-		margin-right: 0.3rem;
-	}
+	
 
 	.link-text {
 		font-size: 0.9rem;

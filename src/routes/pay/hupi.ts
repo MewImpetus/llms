@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import qs from 'querystring';
 
 // Define the rate for the items
-const rate = 7.3
+const rate = parseFloat(env.RATE!)
 
 // Define the items with proper typing
 interface Item {

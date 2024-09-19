@@ -21,7 +21,7 @@ services:
             "description": "Ideal for everyday use. A fast and extremely capable model matching closed source models' capabilities.",
             "modelUrl": "https://huggingface.co/meta-llama/Meta-Llama-3.1-70B-Instruct",
             "websiteUrl": "https://llama.meta.com/",
-            "logoUrl": "https://huggingface.co/datasets/huggingchat/models-logo/resolve/main/meta-logo.png",
+            "logoUrl": "https://llms.chat/chatui/meta-logo.png",
             "tools": true,
             "preprompt" : "",
             "parameters": {
@@ -33,14 +33,16 @@ services:
             },
             "promptExamples": [
               {
-                "title": "Write an email from bullet list",
-                "prompt": "As a restaurant owner, write a professional email to the supplier to get these products every week: \n\n- Wine (x10)\n- Eggs (x24)\n- Bread (x12)"
-              }, {
-                "title": "Code a snake game",
-                "prompt": "Code a basic snake game in python, give explanations for each step."
-              }, {
-                "title": "Assist in a task",
-                "prompt": "How do I make a delicious lemon cheesecake?"
+                "title": "Translate a contract clause",
+                "prompt": "Translate the following legal clause from Chinese to English: \n\n- 本合同自双方签字盖章后生效，任何一方不得单方面变更合同条款。"
+              }, 
+              {
+                "title": "Plan a marketing campaign",
+                "prompt": "As a social media manager, create a 3-month marketing campaign plan for a new tech product launch, including content ideas, platforms, and budget considerations."
+              }, 
+              {
+                "title": "写作短篇故事",
+                "prompt": "写一个以友情为主题的500字短篇故事，包含一个意想不到的结局。"
               }
             ]
           }, 
@@ -50,7 +52,7 @@ services:
             "description": "Cohere's largest language model, optimized for conversational interaction and tool use. Now with the 2024 update!",
             "modelUrl": "https://huggingface.co/CohereForAI/c4ai-command-r-plus-08-2024",
             "websiteUrl": "https://docs.cohere.com/docs/command-r-plus",
-            "logoUrl": "https://huggingface.co/datasets/huggingchat/models-logo/resolve/main/cohere-logo.png",
+            "logoUrl": "https://llms.chat/chatui/cohere-logo.png",
             "tools": true,
             "parameters": {
               "stop": ["<|END_OF_TURN_TOKEN|>"],
@@ -60,14 +62,16 @@ services:
             },
             "promptExamples" : [
               {
-                "title": "Generate a mouse portrait",
-                "prompt": "Generate the portrait of a scientific mouse in its laboratory."
-              }, {
-                "title": "Review a pull request",
-                "prompt": "Review this pull request: https://github.com/huggingface/chat-ui/pull/1131/files"
-              }, {
-                "title": "Code a snake game",
-                "prompt": "Code a basic snake game in python, give explanations for each step."
+                "title": "生成产品广告文案",
+                "prompt": "为一款新发布的智能手表撰写一段吸引用户的广告文案，突出其健康监测功能和时尚设计。"
+              }, 
+              {
+                "title": "解释复杂概念",
+                "prompt": "用简单易懂的语言解释量子计算的基本原理，并举例说明其可能的应用场景。"
+              }, 
+              {
+                "title": "编写数据分析代码",
+                "prompt": "用Python编写一个数据分析脚本，读取CSV文件中的销售数据，计算每个月的总销售额，并生成可视化图表。"
               }
             ]
           },
@@ -75,7 +79,7 @@ services:
             "name": "microsoft/Phi-3-mini-4k-instruct",
             "tokenizer": "microsoft/Phi-3-mini-4k-instruct",
             "description" : "One of the best small models (3.8B parameters), super fast for simple tasks.",
-            "logoUrl": "https://huggingface.co/datasets/huggingchat/models-logo/resolve/main/microsoft-logo.png",
+            "logoUrl": "https://llms.chat/chatui/microsoft-logo.png",
             "modelUrl": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct",
             "websiteUrl": "https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/",
             "preprompt": "",

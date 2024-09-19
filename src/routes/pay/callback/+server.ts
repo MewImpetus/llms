@@ -3,7 +3,11 @@ import { ObjectId } from "mongodb";
 import { hupi, Items } from '../hupi';
 
 export async function POST({ request }) {
+
+
     try {
+
+        
         // 解析表单数据
         const form = await request.formData();
         const form_dict = Object.fromEntries(form);
@@ -25,7 +29,7 @@ export async function POST({ request }) {
             const user = await collections.users.findOne({ _id: userId });
             
             // 检查是否重复订单
-            if (user?.trade_order_ids.includes(form_dict.trade_order_id)) {
+            if (user?.trade_order_ids && user?.trade_order_ids.includes(form_dict.trade_order_id)) {
                 return new Response(JSON.stringify({ message: "Duplicate request" }), { status: 400, headers: { 'Content-Type': 'application/json' } });
             }
 
@@ -65,10 +69,14 @@ export async function POST({ request }) {
             }
 
             // 更新用户信息
-            await collections.users.updateOne(
-                { _id: userId },
-                updateFields
-            );
+            if (Object.keys(updateFields).length != 0){
+                
+                await collections.users.updateOne(
+                    { _id: userId },
+                    updateFields
+                );
+            }
+                
 
             // 返回成功响应
             return new Response('success', {
@@ -81,6 +89,7 @@ export async function POST({ request }) {
 
     } catch (err) {
         // 错误处理
+        console.log(err)
         return new Response(JSON.stringify({ message: "Internal Server Error for the request"}), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 }

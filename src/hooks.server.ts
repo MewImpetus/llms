@@ -76,7 +76,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	});
 
 	// Add the condition to exclude /pay/callback from restrictions
-	if (event.url.pathname === `${base}/pay/callback`) {
+	if (event.url.pathname.endsWith('/pay/callback')) {
 		return await resolve(event);  // Bypass all restrictions for this route
 	}
 

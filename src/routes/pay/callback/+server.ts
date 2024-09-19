@@ -4,7 +4,9 @@ import { hupi, Items } from '../hupi';
 
 export async function POST({ request }) {
 
-    try {
+	console.log(11111)
+
+	try {
         // 解析表单数据
         const form = await request.formData();
         const form_dict = Object.fromEntries(form);
@@ -75,4 +77,5 @@ export async function POST({ request }) {
         // 错误处理
         return Response.json({ message: "Internal Server Error" }, { status: 500 });
     }
+
 }

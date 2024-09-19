@@ -3,16 +3,14 @@ import { ObjectId } from "mongodb";
 import { hupi, Items } from '../hupi';
 
 export async function POST({ request }) {
-
-	console.log(11111)
-
-	try {
+    try {
         // 解析表单数据
         const form = await request.formData();
         const form_dict = Object.fromEntries(form);
-
+        
+        // 验证回调请求是否合法
         if (hupi.check_callback(form_dict)) {
-            // 业务代码
+            // 从 attach 中解析 userId 和商品名称
             let parts = form_dict.attach.split('>');
             const userId = new ObjectId(parts[0]);
             const name = parts[1];
@@ -20,17 +18,22 @@ export async function POST({ request }) {
             const item = Items[name];
 
             if (!item) {
-                return Response.json({ message: "Invalid item" }, { status: 400 });
+                return new Response(JSON.stringify({ message: "Invalid item" }), { status: 400, headers: { 'Content-Type': 'application/json' } });
             }
 
-            // 根据Items类型更新数据库
-            let updateFields = {};
-            
-            // 查询用户当前的会员到期时间、Token余额和总充值金额
+            // 查询用户信息
             const user = await collections.users.findOne({ _id: userId });
+            
+            // 检查是否重复订单
+            if (user?.trade_order_ids.includes(form_dict.trade_order_id)) {
+                return new Response(JSON.stringify({ message: "Duplicate request" }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+            }
+
+            // 根据 Items 类型更新数据库
+            let updateFields = {};
 
             if (name.startsWith('pro')) {
-                // 处理pro会员更新
+                // 处理 pro 会员更新
                 const membershipDays = name === 'pro30' ? 30 : 360;
                 let newExpirationDate = new Date(Date.now() + membershipDays * 24 * 60 * 60 * 1000);
 
@@ -46,19 +49,22 @@ export async function POST({ request }) {
                     $inc: {
                         tokenBalance: item.tokens,
                         totalRechargeAmount: item.price
-                    }
+                    },
+                    $addToSet: { trade_order_ids: form_dict.trade_order_id } // 确保 trade_order_id 在所有订单类型中都添加
                 };
 
             } else if (name.startsWith('aigt')) {
-                // 处理token充值
+                // 处理 token 充值
                 updateFields = {
                     $inc: {
                         tokenBalance: item.tokens,
                         totalRechargeAmount: item.price
-                    }
+                    },
+                    $addToSet: { trade_order_ids: form_dict.trade_order_id }
                 };
             }
 
+            // 更新用户信息
             await collections.users.updateOne(
                 { _id: userId },
                 updateFields
@@ -71,11 +77,10 @@ export async function POST({ request }) {
             });
         }
 
-        return Response.json({ message: "Bad request" }, { status: 400 });
+        return new Response(JSON.stringify({ message: "Bad request" }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 
     } catch (err) {
         // 错误处理
-        return Response.json({ message: "Internal Server Error" }, { status: 500 });
+        return new Response(JSON.stringify({ message: "Internal Server Error"}), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
-
 }

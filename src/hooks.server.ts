@@ -75,6 +75,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		request: event.request,
 	});
 
+	// Add the condition to exclude /pay/callback from restrictions
+	if (event.url.pathname === `${base}/pay/callback`) {
+		return await resolve(event);  // Bypass all restrictions for this route
+	}
+
 	if (event.url.pathname.startsWith(`${base}/api/`) && env.EXPOSE_API !== "true") {
 		return new Response("API is disabled", { status: 403 });
 	}

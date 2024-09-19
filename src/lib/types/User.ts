@@ -17,4 +17,6 @@ export interface User extends Timestamps {
 	tokenBalance?: number; // Token 余额
 	totalRechargeAmount?: number; // 总充值金额
 	apiKey?: string; // API Key
+	// 存入订单号
+	trade_order_ids: [String]
 }

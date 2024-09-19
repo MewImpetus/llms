@@ -15,7 +15,7 @@ interface Item {
 const Items: Record<string, Item> = {
     "pro30": { "name": "LLMsChat 30天PRO会员", "price": 100 * rate, "tokens": 0 },
     "pro360": { "name": "LLMsChat 360天PRO会员", "price": 1000 * rate, "tokens": 0 },
-    "aigt150": { "name": "LLMsChat 充值1000万AIGT", "price": 150 * rate, "tokens": 10000000 },
+    "aigt150": { "name": "LLMsChat 充值1000万AIGT", "price": 0.01, "tokens": 10000000 },
     "aigttest": { "name": "LLMsChat 充值1000万AIGT", "price": 0.01, "tokens": 10000000 }
 }
 

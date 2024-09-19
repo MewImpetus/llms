@@ -81,6 +81,6 @@ export async function POST({ request }) {
 
     } catch (err) {
         // 错误处理
-        return new Response(JSON.stringify({ message: "Internal Server Error"}), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ message: "Internal Server Error for the request"}), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 }

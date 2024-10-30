@@ -20,7 +20,7 @@ services:
             "description": "The latest Qwen open model with improved role-playing, long text generation and structured data understanding.",
             "modelUrl": "https://huggingface.co/Qwen/Qwen2.5-72B-Instruct",
             "websiteUrl": "https://qwenlm.github.io/blog/qwen2.5/",
-            "logoUrl": "https://huggingface.co/datasets/huggingchat/models-logo/resolve/main/qwen-logo.png",
+            "logoUrl": "https://llms.chat/chatui/qwen-logo.png",
             "preprompt": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
             "parameters": {
               "stop": ["<|endoftext|>", "<|im_end|>"],

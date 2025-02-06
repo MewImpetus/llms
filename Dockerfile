@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG INCLUDE_DB=false
 
-
 FROM node:20-slim AS base
 ENV PLAYWRIGHT_SKIP_BROWSER_GC=1
 
@@ -44,11 +43,6 @@ FROM node:20 AS builder
 WORKDIR /app
 
 COPY --link --chown=1000 package-lock.json package.json ./
-RUN --mount=type=cache,target=/app/.npm \
-        npm set cache /app/.npm && \
-        npm ci --omit=dev
-
-FROM builder-production AS builder
 
 ARG APP_BASE=
 ARG PUBLIC_APP_COLOR=blue
@@ -60,12 +54,11 @@ RUN --mount=type=cache,target=/app/.npm \
 
 COPY --link --chown=1000 . .
 
-
-RUN npm run build
-
+RUN git config --global --add safe.directory /app && \
+    npm run build
 
 # mongo image
-FROM mongo:latest AS mongo
+FROM mongo:7 AS mongo
 
 # image to be used if INCLUDE_DB is false
 FROM base AS local_db_false

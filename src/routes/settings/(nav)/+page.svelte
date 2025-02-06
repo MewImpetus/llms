@@ -109,13 +109,20 @@
 <div class="flex w-full flex-col gap-5">
 	<div class="flex flex-col items-start justify-between text-xl font-semibold text-gray-800">
 		<h2>Application Settings</h2>
-		<span class="text-sm font-light text-gray-500">
-			Latest deployment <span class="gap-2 font-mono"
-				>{envPublic.PUBLIC_COMMIT_SHA.slice(0, 7)}</span
+		{#if !!envPublic.PUBLIC_COMMIT_SHA}
+			<a
+				href={`https://github.com/huggingface/chat-ui/commit/${envPublic.PUBLIC_COMMIT_SHA}`}
+				target="_blank"
+				rel="noreferrer"
+				class="text-sm font-light text-gray-500"
 			>
-		</span>
+				Latest deployment <span class="gap-2 font-mono"
+					>{envPublic.PUBLIC_COMMIT_SHA.slice(0, 7)}</span
+				>
+			</a>
+		{/if}
 	</div>
-	<div class="flex h-full flex-col gap-2 max-sm:pt-0">
+	<div class="flex h-full max-w-2xl flex-col gap-2 max-sm:pt-0">
 		{#if envPublic.PUBLIC_APP_DATA_SHARING === "1"}
 			<!-- svelte-ignore a11y-label-has-associated-control -->
 			<label class="flex items-center">
@@ -135,20 +142,36 @@
 		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="mt-2 flex items-center">
 			<Switch name="hideEmojiOnSidebar" bind:checked={$settings.hideEmojiOnSidebar} />
-			<div class="inline cursor-pointer select-none items-center gap-2 pl-2">
+			<div class="inline cursor-pointer select-none items-center gap-2 pl-2 font-semibold">
 				Hide emoticons in conversation topics
+				<p class="text-sm font-normal text-gray-500">
+					Emoticons are shown in the sidebar by default, enable this to hide them.
+				</p>
 			</div>
 		</label>
 
 		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="mt-1 flex items-center">
 			<Switch name="disableStream" bind:checked={$settings.disableStream} />
-			<div class="inline cursor-pointer select-none items-center gap-2 pl-2">
+			<div class="inline cursor-pointer select-none items-center gap-2 pl-2 font-semibold">
 				Disable streaming tokens
 			</div>
 		</label>
 
-		<div class="mt-1 flex flex-col gap-3">
+		<!-- svelte-ignore a11y-label-has-associated-control -->
+		<label class="mt-6 flex items-center">
+			<Switch name="directPaste" bind:checked={$settings.directPaste} />
+			<div class="inline cursor-pointer select-none items-center gap-2 pl-2 font-semibold">
+				Paste text directly into chat
+				<p class="text-sm font-normal text-gray-500">
+					By default, when pasting long text into the chat, we treat it as a plaintext file. Enable
+					this to paste directly into the chat instead.
+				</p>
+			</div>
+		</label>
+
+		<div class="mt-12 flex flex-col gap-3">
+
 			<a
 				href="https://t.me/+DpUFxHcNz902YTJl"
 				target="_blank"

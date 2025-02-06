@@ -10,6 +10,8 @@ export type Message = Partial<Timestamps> & {
 	updates?: MessageUpdate[];
 	webSearchId?: WebSearch["_id"]; // legacy version
 	webSearch?: WebSearch;
+
+	reasoning?: string;
 	score?: -1 | 0 | 1;
 	/**
 	 * Either contains the base64 encoded image data
@@ -23,9 +25,6 @@ export type Message = Partial<Timestamps> & {
 
 	// goes one level deep
 	children?: Message["id"][];
-
-	// the index of the current child in the children array of the message if the message has more than one child
-	currentChildIndex?: number;
 };
 
 export type MessageFile = {

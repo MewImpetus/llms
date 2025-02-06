@@ -12,18 +12,18 @@
 	import { webSearchParameters } from "$lib/stores/webSearchParameters";
 	import type { Message } from "$lib/types/Message";
 	import {
+		MessageReasoningUpdateType,
 		MessageUpdateStatus,
 		MessageUpdateType,
-		type MessageUpdate,
 	} from "$lib/types/MessageUpdate";
 	import titleUpdate from "$lib/stores/titleUpdate";
 	import file2base64 from "$lib/utils/file2base64";
 	import { addChildren } from "$lib/utils/tree/addChildren";
 	import { addSibling } from "$lib/utils/tree/addSibling";
 	import { fetchMessageUpdates } from "$lib/utils/messageUpdates";
-	import { createConvTreeStore } from "$lib/stores/convTree";
 	import type { v4 } from "uuid";
 	import { useSettingsStore } from "$lib/stores/settings.js";
+	import { browser } from "$app/environment";
 
 	export let data;
 
@@ -31,10 +31,72 @@
 
 	let loading = false;
 	let pending = false;
+	let initialRun = true;
 
 	$: activeModel = findCurrentModel([...data.models, ...data.oldModels], data.model);
 
 	let files: File[] = [];
+
+	// create a linear list of `messagesPath` from `messages` that is a tree of threaded messages
+	$: messagesPath = createMessagesPath(messages);
+	$: messagesAlternatives = createMessagesAlternatives(messages);
+
+	$: if (browser && messagesPath.at(-1)?.id) {
+		localStorage.setItem("leafId", messagesPath.at(-1)?.id as string);
+	}
+
+	function createMessagesPath(messages: Message[], msgId?: Message["id"]): Message[] {
+		if (initialRun) {
+			if (!msgId && $page.url.searchParams.get("leafId")) {
+				msgId = $page.url.searchParams.get("leafId") as string;
+				$page.url.searchParams.delete("leafId");
+			}
+			if (!msgId && browser && localStorage.getItem("leafId")) {
+				msgId = localStorage.getItem("leafId") as string;
+			}
+			initialRun = false;
+		}
+
+		const msg = messages.find((msg) => msg.id === msgId) ?? messages.at(-1);
+		if (!msg) return [];
+		// ancestor path
+		const { ancestors } = msg;
+		const path = [];
+		if (ancestors?.length) {
+			for (const ancestorId of ancestors) {
+				const ancestor = messages.find((msg) => msg.id === ancestorId);
+				if (ancestor) {
+					path.push(ancestor);
+				}
+			}
+		}
+
+		// push the node itself in the middle
+		path.push(msg);
+
+		// children path
+		let childrenIds = msg.children;
+		while (childrenIds?.length) {
+			let lastChildId = childrenIds.at(-1);
+			const lastChild = messages.find((msg) => msg.id === lastChildId);
+			if (lastChild) {
+				path.push(lastChild);
+			}
+			childrenIds = lastChild?.children;
+		}
+
+		return path;
+	}
+
+	function createMessagesAlternatives(messages: Message[]): Message["id"][][] {
+		const alternatives = [];
+		for (const message of messages) {
+			if (message.children?.length) {
+				alternatives.push(message.children);
+			}
+		}
+		return alternatives;
+	}
 
 	async function convFromShared() {
 		try {
@@ -68,7 +130,7 @@
 	// this function is used to send new message to the backends
 	async function writeMessage({
 		prompt,
-		messageId = $convTreeStore.leaf ?? undefined,
+		messageId = messagesPath.at(-1)?.id ?? undefined,
 		isRetry = false,
 		isContinue = false,
 	}: {
@@ -215,8 +277,6 @@
 
 			files = [];
 
-			const messageUpdates: MessageUpdate[] = [];
-
 			for await (const update of messageUpdatesIterator) {
 				if ($isAborted) {
 					messageUpdatesAbortController.abort();
@@ -229,7 +289,7 @@
 					update.token = update.token.replaceAll("\0", "");
 				}
 
-				messageUpdates.push(update);
+				messageToWriteTo.updates = [...(messageToWriteTo.updates ?? []), update];
 
 				if (update.type === MessageUpdateType.Stream && !$settings.disableStream) {
 					messageToWriteTo.content += update.token;
@@ -239,7 +299,6 @@
 					update.type === MessageUpdateType.WebSearch ||
 					update.type === MessageUpdateType.Tool
 				) {
-					messageToWriteTo.updates = [...(messageToWriteTo.updates ?? []), update];
 					messages = [...messages];
 				} else if (
 					update.type === MessageUpdateType.Status &&
@@ -262,10 +321,18 @@
 						{ type: "hash", value: update.sha, mime: update.mime, name: update.name },
 					];
 					messages = [...messages];
+				} else if (update.type === MessageUpdateType.Reasoning) {
+					if (!messageToWriteTo.reasoning) {
+						messageToWriteTo.reasoning = "";
+					}
+					if (update.subtype === MessageReasoningUpdateType.Stream) {
+						messageToWriteTo.reasoning += update.token;
+					} else {
+						messageToWriteTo.updates = [...(messageToWriteTo.updates ?? []), update];
+					}
+					messages = [...messages];
 				}
 			}
-
-			messageToWriteTo.updates = messageUpdates;
 		} catch (err) {
 			if (err instanceof Error && err.message.includes("overloaded")) {
 				$error = "Too much traffic, please try again.";
@@ -333,6 +400,9 @@
 	}
 
 	async function onRetry(event: CustomEvent<{ id: Message["id"]; content?: string }>) {
+		const lastMsgId = event.detail.id;
+		messagesPath = createMessagesPath(messages, lastMsgId);
+
 		if (!data.shared) {
 			await writeMessage({
 				prompt: event.detail.content,
@@ -356,9 +426,14 @@
 		}
 	}
 
+	async function onShowAlternateMsg(event: CustomEvent<{ id: Message["id"] }>) {
+		const msgId = event.detail.id;
+		messagesPath = createMessagesPath(messages, msgId);
+	}
+
 	async function onContinue(event: CustomEvent<{ id: Message["id"] }>) {
 		if (!data.shared) {
-			writeMessage({ messageId: event.detail.id, isContinue: true });
+			await writeMessage({ messageId: event.detail.id, isContinue: true });
 		} else {
 			await convFromShared()
 				.then(async (convId) => {
@@ -375,15 +450,16 @@
 		}
 	}
 
-	$: $page.params.id, (($isAborted = true), (loading = false), ($convTreeStore.editing = null));
+	$: $page.params.id, (($isAborted = true), (loading = false));
 	$: title = data.conversations.find((conv) => conv.id === $page.params.id)?.title ?? data.title;
 
-	const convTreeStore = createConvTreeStore();
 	const settings = useSettingsStore();
 </script>
 
 <svelte:head>
-	<title>{title}</title>
+	{#await title then title}
+		<title>{title}</title>
+	{/await}
 	<link
 		rel="stylesheet"
 		href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
@@ -395,13 +471,15 @@
 <ChatWindow
 	{loading}
 	{pending}
-	{messages}
+	messages={messagesPath}
+	{messagesAlternatives}
 	shared={data.shared}
 	preprompt={data.preprompt}
 	bind:files
 	on:message={onMessage}
 	on:retry={onRetry}
 	on:continue={onContinue}
+	on:showAlternateMsg={onShowAlternateMsg}
 	on:vote={(event) => voteMessage(event.detail.score, event.detail.id)}
 	on:share={() => shareConversation($page.params.id, data.title)}
 	on:stop={() => (($isAborted = true), (loading = false))}

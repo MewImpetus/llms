@@ -12,8 +12,9 @@ import { toolFromConfigs } from "$lib/server/tools";
 import { MetricsServer } from "$lib/server/metrics";
 import type { ToolFront, ToolInputFile } from "$lib/types/Tool";
 import { ReviewStatus } from "$lib/types/Review";
+import { base } from "$app/paths";
 
-export const load: LayoutServerLoad = async ({ locals, depends }) => {
+export const load: LayoutServerLoad = async ({ locals, depends, fetch }) => {
 	depends(UrlDependency.ConversationList);
 
 	const settings = await collections.settings.findOne(authCondition(locals));
@@ -51,38 +52,47 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 		  })
 		: null;
 
-	const conversations = await collections.conversations
-		.find(authCondition(locals))
-		.sort({ updatedAt: -1 })
-		.project<
-			Pick<Conversation, "title" | "model" | "_id" | "updatedAt" | "createdAt" | "assistantId">
-		>({
-			title: 1,
-			model: 1,
-			_id: 1,
-			updatedAt: 1,
-			createdAt: 1,
-			assistantId: 1,
-		})
-		.limit(300)
-		.toArray();
+	const nConversations = await collections.conversations.countDocuments(authCondition(locals));
+
+	const conversations =
+		nConversations === 0
+			? Promise.resolve([])
+			: fetch(`${base}/api/conversations`)
+					.then((res) => res.json())
+					.then(
+						(
+							convs: Pick<Conversation, "_id" | "title" | "updatedAt" | "model" | "assistantId">[]
+						) =>
+							convs.map((conv) => ({
+								...conv,
+								updatedAt: new Date(conv.updatedAt),
+							}))
+					);
 
 	const userAssistants = settings?.assistants?.map((assistantId) => assistantId.toString()) ?? [];
 	const userAssistantsSet = new Set(userAssistants);
 
-	const assistantIds = [
-		...userAssistants.map((el) => new ObjectId(el)),
-		...(conversations.map((conv) => conv.assistantId).filter((el) => !!el) as ObjectId[]),
-	];
-
-	const assistants = await collections.assistants.find({ _id: { $in: assistantIds } }).toArray();
+	const assistants = conversations.then((conversations) =>
+		collections.assistants
+			.find({
+				_id: {
+					$in: [
+						...userAssistants.map((el) => new ObjectId(el)),
+						...(conversations.map((conv) => conv.assistantId).filter((el) => !!el) as ObjectId[]),
+					],
+				},
+			})
+			.toArray()
+	);
 
 	const messagesBeforeLogin = env.MESSAGES_BEFORE_LOGIN ? parseInt(env.MESSAGES_BEFORE_LOGIN) : 0;
 
 	let loginRequired = false;
 
-	if (requiresUser && !locals.user && messagesBeforeLogin) {
-		if (conversations.length > messagesBeforeLogin) {
+	if (requiresUser && !locals.user) {
+		if (messagesBeforeLogin === 0) {
+			loginRequired = true;
+		} else if (nConversations >= messagesBeforeLogin) {
 			loginRequired = true;
 		} else {
 			// get the number of messages where `from === "assistant"` across all conversations.
@@ -100,7 +110,7 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 						.toArray()
 				)[0]?.messages ?? 0;
 
-			loginRequired = totalMessages > messagesBeforeLogin;
+			loginRequired = totalMessages >= messagesBeforeLogin;
 		}
 	}
 
@@ -129,25 +139,42 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 		);
 
 	return {
-		conversations: conversations.map((conv) => {
-			if (settings?.hideEmojiOnSidebar) {
-				conv.title = conv.title.replace(/\p{Emoji}/gu, "");
-			}
+		nConversations,
+		conversations: await conversations.then(
+			async (convs) =>
+				await Promise.all(
+					convs.map(async (conv) => {
+						if (settings?.hideEmojiOnSidebar) {
+							conv.title = conv.title.replace(/\p{Emoji}/gu, "");
+						}
 
-			// remove invalid unicode and trim whitespaces
-			conv.title = conv.title.replace(/\uFFFD/gu, "").trimStart();
+						// remove invalid unicode and trim whitespaces
+						conv.title = conv.title.replace(/\uFFFD/gu, "").trimStart();
 
-			return {
-				id: conv._id.toString(),
-				title: conv.title,
-				model: conv.model ?? defaultModel,
-				updatedAt: conv.updatedAt,
-				assistantId: conv.assistantId?.toString(),
-				avatarHash:
-					conv.assistantId &&
-					assistants.find((a) => a._id.toString() === conv.assistantId?.toString())?.avatar,
-			};
-		}) satisfies ConvSidebar[],
+						let avatarUrl: string | undefined = undefined;
+
+						if (conv.assistantId) {
+							const hash = (
+								await collections.assistants.findOne({
+									_id: new ObjectId(conv.assistantId),
+								})
+							)?.avatar;
+							if (hash) {
+								avatarUrl = `/settings/assistants/${conv.assistantId}/avatar.jpg?hash=${hash}`;
+							}
+						}
+
+						return {
+							id: conv._id.toString(),
+							title: conv.title,
+							model: conv.model ?? defaultModel,
+							updatedAt: conv.updatedAt,
+							assistantId: conv.assistantId?.toString(),
+							avatarUrl,
+						} satisfies ConvSidebar;
+					})
+				)
+		),
 		settings: {
 			searchEnabled: !!(
 				env.SERPAPI_KEY ||
@@ -174,6 +201,7 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 					.filter((el) => !el.isHidden && el.isOnByDefault)
 					.map((el) => el._id.toString()),
 			disableStream: settings?.disableStream ?? DEFAULT_SETTINGS.disableStream,
+			directPaste: settings?.directPaste ?? DEFAULT_SETTINGS.directPaste,
 		},
 		models: models.map((model) => ({
 			id: model.id,
@@ -185,6 +213,7 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 			datasetUrl: model.datasetUrl,
 			displayName: model.displayName,
 			description: model.description,
+			reasoning: !!model.reasoning,
 			logoUrl: model.logoUrl,
 			promptExamples: model.promptExamples,
 			parameters: model.parameters,
@@ -216,21 +245,25 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 							toolUseDuration.find(
 								(el) => el.labels.tool === tool._id.toString() && el.labels.quantile === 0.9
 							)?.value ?? 15_000,
+						color: tool.color,
+						icon: tool.icon,
 					} satisfies ToolFront)
 			),
 		communityToolCount: await collections.tools.countDocuments({
 			type: "community",
 			review: ReviewStatus.APPROVED,
 		}),
-		assistants: assistants
-			.filter((el) => userAssistantsSet.has(el._id.toString()))
-			.map((el) => ({
-				...el,
-				_id: el._id.toString(),
-				createdById: undefined,
-				createdByMe:
-					el.createdById.toString() === (locals.user?._id ?? locals.sessionId).toString(),
-			})),
+		assistants: assistants.then((assistants) =>
+			assistants
+				.filter((el) => userAssistantsSet.has(el._id.toString()))
+				.map((el) => ({
+					...el,
+					_id: el._id.toString(),
+					createdById: undefined,
+					createdByMe:
+						el.createdById.toString() === (locals.user?._id ?? locals.sessionId).toString(),
+				}))
+		),
 		user: locals.user && {
 			id: locals.user._id.toString(),
 			username: locals.user.username,

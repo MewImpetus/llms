@@ -113,6 +113,7 @@ async function getOIDCClient(settings: OIDCSettings): Promise<BaseClient> {
 			userinfo_endpoint: `${OIDConfig.PROVIDER_URL}/oidc/me`,
 			jwks_uri: `${OIDConfig.PROVIDER_URL}/oidc/.well-known/jwks.json`,
 		});
+		return issuer
 	} else {
 		issuer = await Issuer.discover(OIDConfig.PROVIDER_URL);
 	}

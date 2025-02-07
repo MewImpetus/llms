@@ -49,24 +49,56 @@ export async function* openAIChatToTextGenerationStream(
 	let generatedText = "";
 	let tokenId = 0;
 	const toolCalls: ToolCallWithParameters[] = [];
+	let thinkingStarted = false;
 	for await (const completion of completionStream) {
 		const { choices } = completion;
-		const content = choices[0]?.delta?.content ?? "";
+		// const content = choices[0]?.delta?.content ?? "";
+		let content = choices[0]?.delta?.content ?? "";
+    	let reasoningContent = choices[0]?.delta?.reasoning_content ?? "";
 		const last = choices[0]?.finish_reason === "stop" || choices[0]?.finish_reason === "length";
+		if (reasoningContent && !thinkingStarted) {
+			generatedText = generatedText + "<think>";
+			yield { token: { id: tokenId++, text: "<think>", logprob: 0, special: true } };
+			thinkingStarted = true;
+		}
+		// Yield the reasoning_content
+		if (reasoningContent) {
+			generatedText = generatedText + reasoningContent;
+			yield {
+				token: {
+					id: tokenId++,
+					text: reasoningContent,
+					logprob: 0,
+					special: false,
+				},
+				generated_text: last ? generatedText : null,
+				details: null,
+			};
+		}
+	
+		// If content is available, yield </think> before the first content
+		if (content && thinkingStarted) {
+			generatedText = generatedText + "</think>";
+			yield { token: { id: tokenId++, text: "</think>", logprob: 0, special: true } };
+			thinkingStarted = false;  // Reset thinkingStarted after </think>
+		}
+
 		if (content) {
 			generatedText = generatedText + content;
+			const output: TextGenerationStreamOutput = {
+				token: {
+					id: tokenId++,
+					text: content ?? "",
+					logprob: 0,
+					special: last,
+				},
+				generated_text: last ? generatedText : null,
+				details: null,
+			};
+			yield output;
 		}
-		const output: TextGenerationStreamOutput = {
-			token: {
-				id: tokenId++,
-				text: content ?? "",
-				logprob: 0,
-				special: last,
-			},
-			generated_text: last ? generatedText : null,
-			details: null,
-		};
-		yield output;
+
+		
 
 		const tools = completion.choices[0]?.delta?.tool_calls || [];
 		for (const tool of tools) {

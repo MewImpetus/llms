@@ -59,9 +59,6 @@ services:
               "beginToken": "<think>",
               "endToken": "</think>"
             },
-             "parameters": {
-              "max_new_tokens": 4096
-            },
             "promptExamples": [
               {
                 "title": "9.11和9.9哪个大",
@@ -85,7 +82,7 @@ services:
             ]
           },
           {
-            "name": "deepseek-ai/DeepSeek-V1",
+            "name": "deepseek-ai/DeepSeek-V3",
             "displayName": "DeepSeek V3",
             "description": "由杭州深度求索人工智能基础技术研究有限公司自研的 MoE 模型，在百科知识、数学推理等多项任务上优势突出，评测成绩在主流榜单中位列开源模型榜首。",
             "modelUrl": "https://github.com/deepseek-ai/DeepSeek-R1",
